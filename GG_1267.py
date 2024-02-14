@@ -205,10 +205,21 @@ details_aruco = {
              lat_lon (List) - Latitude and longitude information of the aruco in QGIS
     * Output: ArUco_details_dict (dict) - Dictionary containing ArUco marker details,
               ArUco_corners (dict) - Dictionary containing ArUco marker corners
-    * Logic: In this code 
+    * Logic: 
+        1) In this code the corner arucos are detected first. The detectMarkers return 
+        the value of the center coordinates and orientation.
+        2) Then those coordinates are used for perspective transformation of the video 
+        feed. The coordinates are stored in a global variable.
+        3) The all_aruco function is called and the details of the aruco is returned.
+        4) Nearest and Check functions are called which returns the nearest aruco and 
+        checks if the bot is traversing through the imaginary nodes.
+        5) Tracker function is called to update the QGIS location.
+        6) The final CV2 image is showed using imshow.
     * Example Call: aruco_details(image, lat_lon)
 
 """
+
+
 def aruco_details(image, lat_lon):
     global detected, count, final_pts, global_points
     ArUco_details_dict = {}
@@ -258,7 +269,7 @@ def aruco_details(image, lat_lon):
             is_sent[which_node] = 1
             tracker(n_id, lat_lon)
 
-             ## RED AND BLUE DOT ON THE BOT AND NEAREST ARUCO 
+            ## RED AND BLUE DOT ON THE BOT AND NEAREST ARUCO
             # red_color = (0, 0, 255)
             # radius = 5
             # z = int(n_loc[0])
@@ -290,7 +301,7 @@ def aruco_details(image, lat_lon):
             is_sent[which_node] = 1
             tracker(n_id, lat_lon)
 
-            ## RED AND BLUE DOT ON THE BOT AND NEAREST ARUCO 
+            ## RED AND BLUE DOT ON THE BOT AND NEAREST ARUCO
 
             # red_color = (0, 0, 255)
             # radius = 5
@@ -315,8 +326,41 @@ def aruco_details(image, lat_lon):
     return ArUco_details_dict, ArUco_corners
 
 
+"""
+
+    * Function Name: euclidean_distance
+    * Input: point1 (list) - Coordinates of the first point (x1, y1)
+             point2 (list) - Coordinates of the second point (x2, y2)
+    * Output: float - Euclidean distance between the two points
+    * Logic: 
+        1)Calculates the Euclidean distance between two points using the formula:
+              
+              distance = sqrt((x2 - x1)^2 + (y2 - y1)^2)
+    
+    * Example Call: distance = euclidean_distance((0, 0), (3, 4))
+
+"""
+
+
 def euclidean_distance(point1, point2):
     return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+
+
+"""
+
+    * Function Name: nearest
+    * Input: details (dict) - Dictionary containing details of Aruco markers
+    * Output: nearest_point_id (list), nearest_point_coords (list)
+    * Logic: 
+        1) Find the nearest Aruco marker to an ID 100 Aruco marker.
+        2) Euclidean Distance function is called for each point and 100 ID coordinates.
+        3) The smallest distance is termed as nearest point. 
+        4) If the nearest marker is further than a threshold distance of 75 units, 
+        it returns the previous nearest marker.
+        5) The nearest ID and its respective coordinates are globalized 
+    * Example Call: nearest_id, nearest_coords = nearest(details)
+    
+"""
 
 
 def nearest(details):
@@ -338,6 +382,22 @@ def nearest(details):
     else:
         # print("Bot not recognised")
         return near, near_coords
+
+
+"""
+
+    * Function Name: write_into_csv
+    * Input: id (int) - ID of the Aruco marker
+             cord (list) - Coordinates of the Aruco marker (x, y)
+    * Output: None
+    * Logic: 
+        1) Writes the ID and coordinates of an Aruco marker into a CSV file.
+        if the coordinates are different from the last two recorded coordinates.
+        2) Writes the path taken by the bot in the arena, the ID and its respective
+        coordinates are written.
+    * Example Call: write_into_csv(1, (100, 200))
+
+"""
 
 
 def write_into_csv(id, cord):
