@@ -1,0 +1,168 @@
+Team ID- 1267
+
+A. Image processing algorithm used for detecting blank image
+
+A mask created using openCV considering HSV values ranging from green to brown colors, 
+since a few event boxes in the arena have a green-brown shade.
+After cropping all the event boxes from the arena using the camera feed, 
+we cropped the top right part of each image and applied the mask for every cropped part 
+from the event boxes.
+If the number of non zero pixels after applying the mask on the image is less than 70, 
+only then we consider that event to not be blank.
+The non blank event list is then used to calculate the path, and consecutively send 
+it to the bot and start the run.
+
+
+B. Path Planning Algorithm
+
+Graph Representation: We created a graph representing a weighted directed graph. 
+Nodes are represented as integers ( Please refer to marked image for the same ), and edges have associated weights. 
+We measured the exact distances in the form of centimeters.
+We also defined the direction the bot should head if it reaches a 
+particular node in a different order. We made a dictionary for it and 
+the key values were nodes and values were “s” , “l”, “r”, and “u”. This 
+is used to generate directions while traversing the graph.
+Dijkstra's Algorithm Implementation: We have implemented a function that 
+uses Dijkstra's algorithm for finding the shortest path and distance from 
+a given start node to an end node in the graph.
+Graph Traversal and Path Finding: The path_find function in the class takes 
+a list of destinations (denoted as letters 'A' to 'E') and finds the shortest 
+path that visits these destinations in order of the priority of events specified.
+Generating Directions for a Path: The generate_direction function generates 
+a list of directions ('s', 'l', 'r', or 'u' for U-turn) based on the shortest 
+path obtained from path_find. It uses the directions dictionary to determine the 
+appropriate direction at each node.
+
+
+C. Uturn Logic:
+
+When the ith index of the direction list is “u” which means that it is a 
+U turn, the bots aruco which is 100’s orientation is stored in a global variable.
+The message “uturn” is sent to the bot to specify the bot should start rotating.
+The orientation of the bot is continuously monitored and when the bots angle
+becomes initial - 170 degrees, the message “uturndone” is sent to the bot
+and the bot stops rotating, rotating of the bot will be explained in the 
+bot code logic part below.  
+
+
+
+D. Model Training:
+
+Directory structure set up::
+The images provided by eyantra must be organised into the following structure.
+Please ensure image folders are set up as:
+   |- task_2b_model_training.py
+   |- images
+     |- train
+       |- Combat
+       |- DestroyedBuildings
+       |- Fire
+       |- Humanitarian Aid and rehabilitation
+       |- Military vehicles and weapons
+     |- test
+       |- Combat
+       |- DestroyedBuildings
+       |- Fire
+       |- Humanitarian Aid and rehabilitation
+       |- Military vehicles and weapons
+
+Dataset Expansion:
+
+1)The arena images are square whose size is dependent on the applied perspective 
+transform. Thus we use the original eyantra folder described above and create a 
+new folder in which each image from the original is reduced to a square image. 
+It was found that retaining the original images of varying sizes decreased model
+performance despite using the same transform while testing. All further 
+transformation mentioned below are done to this new folder: expanded_dataset
+
+2)The images printed on paper and those that the model train on are very different
+because it is dependent on the color space used by the printer and the quality of
+paper and so on...
+To make the model invariant to this we generate images using random ColourJitter that
+is suitable to replicate the effects of lighting and print quality.
+
+3) Secondly, the aruco fluctuates sometimes and the obtained perspective transform 
+may cause 1-2 layers of pixels to be cut off from the cropped events. Ordinarily 
+this is not something to bother about but in this case when the image itself is 50x50
+or 80x80 and there is so much noise, 2 layers of pixel loss can cause significant 
+loss in the feature space. Thus we make the model invariant to this as well by 
+randomly uniformly cropping the train images and saving them as new images,
+
+4) Lastly we have to deal with the noise. Due to significant similarities in 
+classes such as combat and military vehicles; destroyed buildings and human aid, 
+including the noise, image denoising is a bad option as it can confuse some features.
+Instead we add random uniform noise to the train images itself making the model more 
+robust.
+
+Note: Creating new images using the following transforms proved to train the
+model better than using them during training. Generating new images in this fashion 
+added the required invariance to the dataset.
+Further, Please note, for every transform that is applied, except the first one, 
+a copy of the original image is retained for training.
+The test image folder remains the same, the train folder is the new expanded_dataset
+Folder.
+
+
+E. Event detection 
+
+We used the same model architecture as we did for task 4A, except in this case 
+we tried several cropping variations and trained the model to see which one works 
+the best for our implementation. 
+Also, we added more images to the training dataset collected from various sources 
+and of various types, to make the model robust for each category of images placed.
+While detecting events on the arena after placing the images, we used a list 
+containing the predictions of last 40 frames, i.e. every frame being used to 
+crop the events and then passing them through the model and detecting as an 
+event, and used the prediction occurring the most number of times as the final 
+prediction.
+
+
+F. Initial sending path and imaginary nodes:
+
+For imaginary node detection, we are using a “check” function to check if the 
+ID 100 which is on the bot enters a particular region.
+We created 5 more nodes for 5 events so that the bot can stop above the event 
+and buzz for 1 second, in order to detect if the bot has reached the imaginary 
+node, we use check function which checks if the bot is within certain coordinates, 
+and if it is, the program will be sending a command to the bot.
+After the path is decided, it is converted to string format. The node string 
+and the direction string are generated. The socket connection is established 
+and the program sends both the strings to the bot.
+
+
+
+G. Line following algorithm 
+
+On the arena, wherever there lines in the center of the road, we use the 
+middle sensors to follow the line and move the bot according to the direction 
+sent by the path planning algorithm. 
+When nodes are encountered, they are detected using the middle sensors, so as 
+to keep a count of which node number is visited already, and which is the next 
+one in the path which has to be visited, and the bot can move in the direction 
+specified by the path sent to the bot via socket. 
+In roads where there are black lines on the sides of the road, we use the side 
+sensors to follow the line.
+In some cases, when the bot is neither on the center line nor on the side ones, 
+we use adjust functions, like adjustleft and adjust right which will adjust the 
+bot in the left or right direction until the corner sensor detects a black line.
+For cases where we need to take U-turns, we use aruco angle on the bot to align 
+and rotate the bot in place, and after the turn is taken, adjust the bot using 
+the adjustleft and adjustright functions to align the bot on the road for the 
+next direction it has to move according to the path it has received. 
+
+
+
+H. QGIS 
+The aruco_details function takes an image and a set of latitude and longitude 
+coordinates as input, detects ArUco markers, extracts relevant details such 
+as marker IDs, positions, and orientations, and performs some additional 
+processing. Perspective transformation makes the arena centered.
+
+The euclidean_distance function calculates the distance between two points, 
+nearest finds the nearest ArUco marker based on Euclidean distance, 
+write_into_csv writes data into a CSV file, all_aruco detects all ArUco markers 
+in an image, and tracker updates live tracking data in a 
+CSV file based on ArUco marker information.
+
+The nearest aruco ID and its coordinates is written onto the live data file
+which the qgis software refers for updation of the position.
