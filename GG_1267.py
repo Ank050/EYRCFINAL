@@ -582,11 +582,8 @@ def check(details):
     * Example Call:
         # Open a video capture object
         cap = cv2.VideoCapture(0)
-
         # Set resolution to 640x480 (might not be exact)
         set_resolution(cap, 640, 480)
-
-        # ... Use the capture object with modified resolution ...
 
 """
 
@@ -596,6 +593,30 @@ def set_resolution(cap, width, height):
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
 
+"""
+
+    * Function Name: event_identification
+    * Input:
+        * img: NumPy array representing an image.
+    * Output:
+        * list: A list of cropped sub-images from the input image, potentially associated with different events.
+    * Logic:
+        1. Defines five constant slices based on coordinates to extract sub-images from specific regions of the input image.
+        2. Extracts sub-images for each defined region:
+            * `im1` from top-left region (E).
+            * `im2` from bottom-right region (C).
+            * `im3` from bottom-left region (D).
+            * `im4` from bottom-right corner region (B).
+            * `im5` from top-left corner region (A).
+        3. **Commented out code:** Shows examples of displaying or saving sub-images for debugging purposes.
+        4. Adds the extracted sub-images (`im1`, `im4`, `im2`, `im3`, `im5`) to an `event_list`.
+    * Example Call:
+        # Assuming you have an image loaded as `img`
+        event_list = event_identification(img)
+    
+"""
+
+
 def event_identification(img):
     event_list = []
     im1 = img[132:218, 200:287]  # E
@@ -603,25 +624,6 @@ def event_identification(img):
     im3 = img[471:549, 191:266]  # D
     im4 = img[680:766, 672:757]  # B
     im5 = img[882:963, 200:285]  # A
-
-    # im1 = img[135:216, 206:287]  # E
-    # im2 = img[471:550, 683:757]  # C
-    # im3 = img[471:549, 191:266]  # D
-    # im4 = img[681:765, 673:759]  # B
-    # im5 = img[882:963, 200:285]  # A
-
-    # im2 = img[475:550, 680:761]  # C
-    # im1 = img[135:213, 206:282]  # E
-    # im2 = img[480:554, 688:763]  # C
-    # im3 = img[471:546, 191:261]  # D
-    # im4 = img[681:762, 673:754]  # B
-    # im5 = img[882:960, 200:280]  # A
-
-    # im1 = img[135:216, 206:283]  # E
-    # im2 = img[474:548, 684:757]  # C
-    # im3 = img[472:548, 192:259]  # D
-    # im4 = img[683:753, 676:746]  # B
-    # im5 = img[882:958, 201:275]  # A
 
     # cv2.imshow("im1", im1)
     # cv2.imshow("im2", im2)
