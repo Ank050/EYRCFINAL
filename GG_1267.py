@@ -194,9 +194,8 @@ details_aruco = {
     49: [[39, 489], 0],
     27: [[405, 673], 1],
 }
+#################################################################
 
-
-#################### ARUCO CODE ##############################
 
 """
 
@@ -302,7 +301,6 @@ def aruco_details(image, lat_lon):
             tracker(n_id, lat_lon)
 
             ## RED AND BLUE DOT ON THE BOT AND NEAREST ARUCO
-
             # red_color = (0, 0, 255)
             # radius = 5
             # z = int(n_loc[0])
@@ -410,6 +408,21 @@ def write_into_csv(id, cord):
         last_recorded_cord = cord
 
 
+"""
+
+    * Function Name: all_aruco
+    * Input: image (numpy.ndarray) - input image from CV2 
+    * Output: ArUco_details_dict (dict) - dictionary containing ArUco marker 
+        IDs as keys and their details (center coordinates and orientation) as values
+    * Logic: 
+        1) Detects ArUco markers in the input image and extracts their center coordinates
+        and their orientation in degrees. 
+        2) Returns a dictionary containing this information.
+    * Example Call: ArUco_details = all_aruco(image)
+
+"""
+
+
 def all_aruco(image):
     ArUco_details_dict = {}
     aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
@@ -429,6 +442,23 @@ def all_aruco(image):
             ArUco_details_dict[marker_id] = [[center_x, center_y], marker_orientation]
 
     return ArUco_details_dict
+
+
+"""
+
+    * Function Name: tracker
+    * Input: ar_id (int) - AR marker ID, 
+             lat_lon (dict) - dictionary mapping AR marker IDs to (latitude, longitude) of  QGIS 
+    * Output: None
+    * Logic: 
+        1) Updates the CSV file "live_data.csv" with the latest latitude and longitude 
+        information for the nearest aruco ID and coordinates.
+        2) It is used to update Live_data.csv as the QGIS software is retrieving 
+        the coordinates data from that file.
+        3) Only one ID and coordinates is written into the file.
+    * Example Call: tracker(1, {1: (latitude, longitude)})
+
+"""
 
 
 def tracker(ar_id, lat_lon):
@@ -459,6 +489,29 @@ def tracker(ar_id, lat_lon):
         write_into_csv(ar_id, lat_lon[ar_id_str])
 
 
+"""
+
+    * Function Name: read_csv
+    * Input: No input parameters
+    * Output: Dictionary (lat_lon) with:
+        * Keys: Strings representing IDs from the CSV file
+        * Values: Lists containing two elements: latitude and longitude
+    * Logic:
+        1. Opens the "lat_long1.csv" file in read mode.
+        2. Creates a CSV reader object.
+        3. Iterates through each row in the CSV file.
+        4. For each row:
+            - Extracts ID, latitude, and longitude values.
+            - Adds the ID as a key and a list containing latitude and longitude as the value to the lat_lon dictionary.
+        5. Closes the file.
+        6. Returns the lat_lon dictionary.
+    * Example Call:
+        my_data = read_csv()
+        print(my_data["ID123"])  # Print the latitude and longitude for ID "ID123"
+
+"""
+
+
 def read_csv():
     lat_lon = {}
     file = open("lat_long1.csv", mode="r")
@@ -470,6 +523,30 @@ def read_csv():
         lat_lon[id] = [lat, lon]
     file.close()
     return lat_lon
+
+
+"""
+
+    * Function Name: check
+    * Input:
+        * details: A dictionary containing various data points with unknown structure.
+    * Output:
+        * String: 
+            * "A" if details[100][0] is within certain longitude and latitude ranges.
+            * "B", "C", "D", "E", or "F" based on additional similar conditions.
+            * None if details[100] doesn't exist or any condition isn't met.
+    * Logic:
+        1. Checks if the key "100" exists in the `details` dictionary.
+        2. If it exists, retrieves the coordinates of that key and stores it in `hun`.
+        3.  * Checks if the first element (`hun[0]`) falls within specific longitude ranges.
+            * Checks if the second element (`hun[1]`) falls within specific latitude ranges.
+            * Returns "A", "B", "C", "D", "E", or "F" depending on the matched ranges.
+        4. If any checks fail or `hun` doesn't exist, returns None.
+    * Example Call:
+        result = check({"100": [[210, 800], [700, 600]]})
+        print(result)  # Output: "A" (assuming ranges match)
+
+"""
 
 
 def check(details):
@@ -489,7 +566,29 @@ def check(details):
             return "F"
 
 
-#################### MODEL CODE ##############################
+"""
+
+    * Function Name: set_resolution
+    * Input:
+        * cap: OpenCV VideoCapture object representing a video source.
+        * width: Integer representing the desired frame width.
+        * height: Integer representing the desired frame height.
+    * Output:
+        * None. The function modifies the `cap` object to use the given resolution.
+    * Logic:
+        1. Uses the `cap.set` method to set the `CAP_PROP_FRAME_WIDTH` property to the given `width`.
+        2. Uses the `cap.set` method to set the `CAP_PROP_FRAME_HEIGHT` property to the given `height`.
+        3. These calls attempt to change the resolution of the captured frames from the video source represented by `cap`.
+    * Example Call:
+        # Open a video capture object
+        cap = cv2.VideoCapture(0)
+
+        # Set resolution to 640x480 (might not be exact)
+        set_resolution(cap, 640, 480)
+
+        # ... Use the capture object with modified resolution ...
+
+"""
 
 
 def set_resolution(cap, width, height):
