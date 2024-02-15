@@ -642,11 +642,70 @@ def event_identification(img):
     return event_list
 
 
+"""
+
+    * Function Name: update_events
+    * Input:
+        * non_zero_pixel_count: An integer representing the number of non-zero pixels in an image.
+    * Output:
+        * integer:
+            * 1 if the `non_zero_pixel_count` is less than 70, indicating presence of an event.
+            * 0 otherwise, indicating absence of an event.
+    * Logic:
+        1. Checks if the `non_zero_pixel_count` is less than 70. 
+        2. If the count is less than 70, returns 1, signaling event detection.
+        3. Otherwise, returns 0, suggesting absence of an event.
+    * Example Call:
+    #calct
+        event_status = update_events(non_zero_pixel_count)
+        if event_status == 1:
+            # Handle low activity event
+            print("Low activity detected!")
+        else:
+            # Handle high activity or normal conditions
+            print("Normal activity observed.")
+
+"""
+
+
 def update_events(non_zero_pixel_count):
     if non_zero_pixel_count < 70:
         return 1
     else:
         return 0
+
+
+"""
+    * Function Name: filter
+
+    * Input:
+        * `img`: An OpenCV image object representing the input image.
+
+    * Output:
+        * None (void function). Updates the global `events` dictionary with 1 if the image has less number of pixels which lie in the range of mask values, which means an event is present, otherwise a 0 is appended to depict a blank event.
+
+    * Logic:
+        1. Crops five regions from the input image based on fixed coordinates, which are the coordinates of a fixed area square, from the top right part of the image.
+        2. Saves each cropped part as a separate JPEG image: `img1.jpg`, `img2.jpg`, ..., `img5.jpg`.
+        3. Loops through each saved image:
+            * Reads the image.
+            * Converts it to HSV color space.
+            * Defines a specific color range based on HSV values.
+            * Creates a mask to identify pixels within that color range.
+            * Calculates the number of non-zero pixels in the masked image.
+            * Uses the `update_events` function to interpret the pixel count and update the `events` dictionary with an activity level (1 for low activity, 0 for high or normal).
+            * Appends the values 1 or 0 to a  deque.
+            * Updates the corresponding letter's value in the `events` dictionary with the maximum value in its deque.
+
+    * Example Call:
+        # Assuming you have an image loaded as `img`
+        filter(img)
+
+        # Access values of events in dictionary after the function call
+        print(events["A"]) 
+        print(events["B"]) 
+
+    """
 
 
 def filter(img):
@@ -687,10 +746,51 @@ def filter(img):
             events[letter] = 0
 
 
+"""
+
+    * Function Name: find_max_count_number
+    * Input:
+        * lst: A list containing numbers or other countable elements.
+    * Output:
+        * max_count_number which is the value of the most occuring number in a list.
+    * Logic:
+        1. Creates a Counter object `counts` from the input list, which stores the counts 
+        of each distinct element.
+        2. Finds the element with the maximum count using the `max` function with a 
+        key argument that specifies `counts.get` to retrieve the count for each element.
+        3. Returns the element with the maximum count.
+    * Example Call:
+        my_list = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3]
+        most_frequent_number = find_max_count_number(my_list)
+        print("The most frequent number is:", most_frequent_number)  # Output: 3
+    
+"""
+
+
 def find_max_count_number(lst):
     counts = Counter(lst)
     max_count_number = max(counts, key=counts.get)
     return max_count_number
+
+
+"""
+
+    * Function Name: get_max
+    * Input:
+        * target_image_pred_label: The predicted label for a specific image.
+        * img_index: The index of the image in the global `boxes` list.
+    * Output:
+        * integer: The most frequent predicted label within the last 60 predictions for the given image.
+    * Logic:
+        1) This function is used to store the predictions of the model in a dictionary called boxes.
+        2) find_max_count_number function is called which gets max of the boxes list.
+        3) The keys of boxes and is values are updated with max occuring number.
+        4) This is done to reduce flickering of the model.
+        5) The score is returned .
+    * Example Call:
+        most_frequent_label = get_max(predicted_label, image_index)
+    
+"""
 
 
 def get_max(target_image_pred_label, img_index):
@@ -702,6 +802,31 @@ def get_max(target_image_pred_label, img_index):
     score = find_max_count_number(l)
     boxes[img_index] = l
     return score
+
+
+"""
+
+    * Function Name: classify_event
+    * Input:
+        * image: A NumPy array representing an image.
+        * img_index: The index of the image in a global list.
+    * Output:
+        * string: The predicted event class for the image, based on the pre-trained model.
+    * Logic:
+        1) Image Preprocessing (Optional):
+            - Saves the image to a temporary file ("a.jpeg").
+            - Loads the image using Pillow's `Image` class.
+            - Applies a series of transformations to resize the image to the model's input requirements.
+            - Converts the image to a PyTorch tensor and moves it to the appropriate device (CPU/GPU).
+        2) Model Evaluation:
+            - Sets the model to evaluation mode (disabling dropout, etc.).
+            - Disables gradient calculation for efficiency.
+            - Makes a prediction on the image tensor with the model.
+        3) Returns the predicted event class name from the list of class names.
+    * Example Call:
+        predicted_event = classify_event(image, image_index)
+    
+"""
 
 
 def classify_event(image, img_index):
@@ -733,6 +858,24 @@ def classify_event(image, img_index):
     target_image_pred_label = torch.argmax(target_image_pred_probs, dim=1)
     target_image_pred_label = get_max(target_image_pred_label.item(), img_index)
     return class_names[target_image_pred_label]
+
+
+"""
+  
+    * Function Name: classification
+    * Input:
+        * event_list: A list of image with 5 events.
+    * Output:
+        * list: A list of detected events found in the input images.
+    * Logic:
+        1rocesses each sub-image from the `event_list` one by one.
+        2) Calls the `classify_event` function (assumed to exist) on each sub-image.
+        3) Returns the `detected_list` containing all predicted events from the input sub-images.
+    * Example Call:
+        detected_events = classification(event_list)
+        print("Detected events:", detected_events)  # Output: ["combat", "fire", ...]
+    
+"""
 
 
 def classification(event_list):
