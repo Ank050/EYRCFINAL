@@ -682,10 +682,13 @@ def update_events(non_zero_pixel_count):
         * `img`: An OpenCV image object representing the input image.
 
     * Output:
-        * None (void function). Updates the global `events` dictionary with 1 if the image has less number of pixels which lie in the range of mask values, which means an event is present, otherwise a 0 is appended to depict a blank event.
+        * None (void function). Updates the global `events` dictionary with 1 if the image has
+          less number of pixels which lie in the range of mask values, which means an event is 
+          present, otherwise a 0 is appended to depict a blank event.
 
     * Logic:
-        1. Crops five regions from the input image based on fixed coordinates, which are the coordinates of a fixed area square, from the top right part of the image.
+        1. Crops five regions from the input image based on fixed coordinates, which are the 
+        coordinates of a fixed area square, from the top right part of the image.
         2. Saves each cropped part as a separate JPEG image: `img1.jpg`, `img2.jpg`, ..., `img5.jpg`.
         3. Loops through each saved image:
             * Reads the image.
@@ -693,9 +696,11 @@ def update_events(non_zero_pixel_count):
             * Defines a specific color range based on HSV values.
             * Creates a mask to identify pixels within that color range.
             * Calculates the number of non-zero pixels in the masked image.
-            * Uses the `update_events` function to interpret the pixel count and update the `events` dictionary with an activity level (1 for low activity, 0 for high or normal).
+            * Uses the `update_events` function to interpret the pixel count and update the `events` 
+            dictionary with an activity level (1 for low activity, 0 for high or normal).
             * Appends the values 1 or 0 to a  deque.
-            * Updates the corresponding letter's value in the `events` dictionary with the maximum value in its deque.
+            * Updates the corresponding letter's value in the `events` dictionary with the maximum 
+            value in its deque.
 
     * Example Call:
         # Assuming you have an image loaded as `img`
@@ -894,6 +899,18 @@ def classification(event_list):
         if detected_event == destroyed_buildings:
             detected_list.append("destroyed_buildings")
     return detected_list
+
+
+"""
+
+    * Function Name: detect_ArUco_details
+    * Input: image (numpy.ndarray) - input image containing ArUco markers
+    * Output: ArUco_details_dict (dict)
+              ArUco_corners (dict) - dictionaries containing details of detected ArUco markers
+    * Logic: 
+    * Example Call: ArUco_details, ArUco_corners = detect_ArUco_details(image)
+    
+"""
 
 
 def detect_ArUco_details(image):
