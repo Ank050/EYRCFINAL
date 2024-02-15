@@ -1,3 +1,46 @@
+"""
+*****************************************************************************************
+*
+*        		===============================================
+*           		Geo Guide (GG) Theme (eYRC 2023-24)
+*        		===============================================
+*
+*  This script is to implement Task 5A of Geo Guide (GG) Theme (eYRC 2023-24).
+*  
+*  This software is made available on an "AS IS WHERE IS BASIS".
+*  Licensee/end user indemnifies and will keep e-Yantra indemnified from
+*  any and all claim(s) that emanate from the use of the Software or 
+*  breach of the terms of this agreement.
+*
+******************************************************************************************
+"""
+
+"""
+
+* Team Id : 1267
+
+* Author List : Adithya G Jayanth, Ananya Sharma, Ankith L, Ilaa S Chenjeri
+
+* Filename: path.py
+
+* Theme: Geo Guide
+
+* Functions: 
+[
+    dijkstra,
+    path_find,
+    gendirect
+]
+
+* Global Variables: 
+[
+    graph,
+    directions
+]
+
+"""
+
+
 class path_gen:
     graph = {
         0: {1: 1.5},
@@ -117,6 +160,30 @@ class path_gen:
         "12 15 17": "s",
     }
 
+    """
+        * Function Name: dijkstra
+        * Input:
+            * `self`: Reference to the object of the class where the function is defined. 
+            It is assumed that the class has a member named `graph` which represents 
+            the weighted graph as a dictionary of dictionaries. 
+            * `start`: The starting node for the shortest path search.
+            * `end`: The destination node for the shortest path search.
+        * Output:
+            * A tuple containing two elements:
+                * The shortest path from `start` to `end` as a list of nodes.
+                * The distance of the shortest path.
+        * Logic:
+            * Implements Dijkstra's algorithm to find the shortest path between two nodes 
+            in a weighted graph.
+            * Uses a greedy approach to iteratively select the unvisited node with the 
+            minimum distance from the starting node.
+            * Updates distances and previous nodes for neighboring nodes based on the 
+            current node.
+            * Reconstructs the shortest path by backtracking from the destination node.
+        * Example Call:
+        shortest_path, distance = dijkstra(graph, 'A', 'D')
+    """
+
     def dijkstra(self, start, end):
         distances = {node: float("inf") for node in self.graph}
         distances[start] = 0
@@ -147,6 +214,35 @@ class path_gen:
 
         return path, distances[end]
 
+    """
+        * Function Name: path_find
+        * Input:
+            * `self`: Reference to the object of the class where the function is defined. It is 
+            assumed that the class has a `dijkstra` method and a member named `graph`.
+            * `path_list`: A list of node names representing the desired path to be found.
+        * Output:
+            * A list of node names representing the shortest path between the first and last nodes 
+            in `path_list`, incorporating the `graph` information.
+        * Logic:
+            1. Initialize an empty path list and a previous node variable.
+            2. Create a dictionary mapping node names to their corresponding distances from the 
+            starting node (assumed to be 0).
+            3. Iterate through each node name in `path_list`:
+                * Use the `dijkstra` method to find the shortest path from the previous node to 
+                the current node.
+                * Remove the starting node from the returned path.
+                * Append the remaining nodes in the path to the overall path list.
+                * Update the previous node to the current node's distance from the starting node 
+                (using the dictionary).
+            4. Use the `dijkstra` method again to find the shortest path from the last node in the 
+            path to the starting node (assumed to be 0).
+            5. Remove the starting node from the returned path and append the remaining nodes to the overall 
+            path list.
+            6. Return the final path.
+        * Example Call:
+        path = path_finder.path_find(["A", "B", "C"])
+    """
+
     def path_find(self, path_list):
         path = [0]
         prev_node = 0
@@ -167,6 +263,36 @@ class path_gen:
         path.extend(p)
         return path
 
+    """
+        * Function Name: gendirect
+        * Input:
+            * `self`: Reference to the object of the class where the function is defined. 
+            It is assumed that the class has a member named `directions` which is a dictionary 
+            mapping strings of three consecutive nodes in the path to their corresponding directions.
+            * `path`: A list of node names representing the path.
+        * Output:
+            * A list containing two elements:
+                * `final_path`: A list of direction instructions for the path, where "s" 
+                represents "start", "u" represents "up", and other characters represent directions 
+                from the `directions` dictionary.
+                * `original_path`: The original path list provided as input.
+        * Logic:
+            1. Initialize an empty `final_path` list and add "s" to indicate the starting point.
+            2. Iterate through the path list, skipping the first and last element 
+            (since they don't have two neighbors).
+            3. Check if the current node and its next neighbor are the same:
+                * If yes, add "u" to the `final_path` to indicate going up.
+                * If no, construct a key string by concatenating the current, previous, and next 
+                node names.
+                * Look up the corresponding direction in the `directions` dictionary and add 
+                it to the `final_path`.
+            4. Return a list containing the `final_path` and the original `path` for reference.
+
+        * Example Call:
+        final_path, original_path = path_finder.gendirect(["A", "B", "C", "D", "E"])
+
+    """
+
     def gendirect(self, path):
         final_path = []
         final_path.append("s")
@@ -184,4 +310,3 @@ class path_gen:
 
 if __name__ == "__main__":
     x = path_gen()
-    print(x.gendirect(x.path_find(["E", "B", "A", "D", "C"])))

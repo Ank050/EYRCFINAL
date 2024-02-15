@@ -659,11 +659,11 @@ def event_identification(img):
     #calct
         event_status = update_events(non_zero_pixel_count)
         if event_status == 1:
-            # Handle low activity event
-            print("Low activity detected!")
+            # Handle presence of event
+            print("Event detected!")
         else:
-            # Handle high activity or normal conditions
-            print("Normal activity observed.")
+            # Handle absence of event
+            print("No event placed.")
 
 """
 
@@ -677,19 +677,16 @@ def update_events(non_zero_pixel_count):
 
 """
     * Function Name: filter
-
     * Input:
         * `img`: An OpenCV image object representing the input image.
-
     * Output:
         * None (void function). Updates the global `events` dictionary with 1 if the image has
           less number of pixels which lie in the range of mask values, which means an event is 
           present, otherwise a 0 is appended to depict a blank event.
-
     * Logic:
         1. Crops five regions from the input image based on fixed coordinates, which are the 
         coordinates of a fixed area square, from the top right part of the image.
-        2. Saves each cropped part as a separate JPEG image: `img1.jpg`, `img2.jpg`, ..., `img5.jpg`.
+        2. Saves each cropped part as a separate image: `img1.jpg`, `img2.jpg`, ..., `img5.jpg`.
         3. Loops through each saved image:
             * Reads the image.
             * Converts it to HSV color space.
@@ -697,17 +694,13 @@ def update_events(non_zero_pixel_count):
             * Creates a mask to identify pixels within that color range.
             * Calculates the number of non-zero pixels in the masked image.
             * Uses the `update_events` function to interpret the pixel count and update the `events` 
-            dictionary with an activity level (1 for low activity, 0 for high or normal).
+            dictionary with a value (1 for presence of event, 0 for absence).
             * Appends the values 1 or 0 to a  deque.
             * Updates the corresponding letter's value in the `events` dictionary with the maximum 
             value in its deque.
-
     * Example Call:
-        # Assuming you have an image loaded as `img`
         filter(img)
-
-        # Access values of events in dictionary after the function call
-        print(events["A"]) 
+        print(events["A"])  # prints 1 if event is present, and 0 if it is absent
         print(events["B"]) 
 
     """
@@ -906,8 +899,19 @@ def classification(event_list):
     * Function Name: detect_ArUco_details
     * Input: image (numpy.ndarray) - input image containing ArUco markers
     * Output: ArUco_details_dict (dict)
-              ArUco_corners (dict) - dictionaries containing details of detected ArUco markers
+              ArUco_corners (dict) - dictionaries containing details of ArUco markers
     * Logic: 
+        1) This function takes CV2 image as a parameter.
+        2) The arucos are detected and there is perspective transformation of
+        the CV2 image.
+        3) Event_identification and classification functions are called inorder to 
+        run the model and make predictions on the images.
+        4) The images are also passed through filter which checks if the image is 
+        present in the box or is it blank.
+        5) After getting the respective predictions such as Fire, ... or Blank, the
+        respective bounding boxes are drawn and the respective classified class is 
+        printed above the bounding box.
+        6) The CV2 image is displayed on another window.
     * Example Call: ArUco_details, ArUco_corners = detect_ArUco_details(image)
     
 """
@@ -1254,6 +1258,36 @@ def detect_ArUco_details(image):
     return ArUco_details_dict, ArUco_corners
 
 
+"""
+    * Function Name: mark_ArUco_image
+    * Input:
+        * `image`: An OpenCV image object representing the input image.
+        * `ArUco_details_dict`: A dictionary containing detected ArUco marker IDs as keys 
+        and a list [center, rotation_vector] as values, where:
+            - `center`: (x, y) coordinates of the marker center.
+            - `rotation_vector`: Rotation vector describing the marker orientation.
+        * `ArUco_corners`: A list of corner coordinates for each detected ArUco marker.
+    * Output:
+        * `image`: The input image with circles drawn around marker centers, IDs displayed
+        next to the centers, and potentially other visual markings (not implemented here).
+    * Logic:
+        1. Iterates through each detected ArUco marker ID (`ids`) and its details in the 
+        `ArUco_details_dict`.
+        2. Extracts the marker center coordinates (`center`) from the details.
+        3. Draws a blue circle around the marker center on the image.
+        4. Calculates the center of the top-left and top-right corners of the marker.
+        5. Calculates the distance between the marker center and the top-left/top-right center.
+        6. Uses this distance as an offset to position the marker ID text next to the center.
+        7. Displays the marker ID on the image in blue with white outline.
+    * Example Call: 
+        image = cv2.imread("image.jpg")
+        marked_image = mark_ArUco_image(image, ArUco_details_dict, ArUco_corners)
+        cv2.imshow("Marked Image", marked_image)
+        cv2.waitKey(0)
+
+"""
+
+
 def mark_ArUco_image(image, ArUco_details_dict, ArUco_corners):
     for ids, details in ArUco_details_dict.items():
         center = details[0]
@@ -1278,6 +1312,30 @@ def mark_ArUco_image(image, ArUco_details_dict, ArUco_corners):
     return image
 
 
+"""
+    * Function Name: task_4a_return
+    * Input: None (uses global variables `detected` and `events`)
+    * Output:
+        * Dictionary `identified_labels`: Containing letters ("A", "B", ...) as 
+        keys and corresponding labels from the `detected` list as values, but 
+        only includes labels where event was detected in the filter function.
+        (events["A"] == 1, etc.).
+    * Logic:
+        1. Initializes an empty dictionary `identified_labels`.
+        2. Iterates through each letter ("A", "B", ..., "E").
+        3. Checks if the event label (key) in the `events` dictionary is 1 (presence of event).
+        4. If the value is 1, gets the label for that letter from the `detected` list and adds 
+        it as the value
+        in the `identified_labels` dictionary with the letter as the key.
+        5. Otherwise, adds an empty string to `identified_labels` for that letter.
+        6. Returns the `identified_labels` dictionary with the event letters and 
+        their labels as keys and values respectively .
+    * Example Call:
+        identified_labels = task_4a_return()
+        print(identified_labels)  # Output: {'A': 'fire', 'B': '', 'C': 'destroyed_buildings', ...}
+"""
+
+
 def task_4a_return():
     identified_labels = {}
     global detected
@@ -1289,6 +1347,28 @@ def task_4a_return():
         "E": str(detected[4] if events["E"] == 1 else ""),
     }
     return identified_labels
+
+
+"""
+    * Function Name: filter_list
+    * Input:
+        * `identified_labels`: A dictionary containing letters ("A", "B", ...) as keys and corresponding labels
+        from the `detected` list as values.
+    * Output:
+        * List `final_list`: Containing only the letters from `identified_labels` where the corresponding label
+        matches specific keywords ("fire", "destroyed_buildings", etc.).
+    * Logic:
+        1. Initializes an empty list `final_list`.
+        2. Iterates through each letter in `identified_labels`.
+        3. Checks if the corresponding label matches a specific keyword ("fire", "destroyed_buildings", etc.).
+        4. If there's a match, adds the letter to `final_list`.
+        5. Repeats for all keywords and letters in `identified_labels`.
+        6. Returns the final list of letters with labels matching the specified keywords.
+    * Example Call:
+        labels = {"A": "fire", "B": "military_vehicles", "C": "buildings"}
+        filtered_list = filter_list(labels)
+        print(filtered_list)  # Output: ['A', 'B']
+"""
 
 
 def filter_list(identified_labels):
@@ -1317,7 +1397,34 @@ def filter_list(identified_labels):
 
 ###############	Main Function	#################
 
+#################### MODEL ####################
+
 if __name__ == "__main__":
+
+    """
+    Logic:
+    1)
+        - Load a pre-trained model (`model5B.pth`).
+        - Define parameters like marker type (`aruco`) and video path (`vid.mp4`).
+        - Open the video capture and check for errors.
+        - Set video resolution.
+        - Initialize variables for time tracking and duration.
+    2)
+        - Loop for a specified duration.
+        - Read each frame from the video.
+        - Detect Aruco markers in the frame (`detect_ArUco_details`).
+        - Mark the identified markers on the image (`mark_ArUco_image`).
+        - Get identified labels from marked areas (`task_4a_return`).
+        - Release video capture and close windows.
+    3)
+        - Filter and order the identified labels (`filter_list`).
+        - Create a dictionary with non-empty labels.
+        - Copy the dictionary for further processing.
+        - Map identified labels to human-readable names.
+    4.
+        - Print the final predicted events as JSON and the priority-ordered list.
+    """
+
     flag_path = 1
     model_path = r"model5B.pth"
     model = torch.load(model_path, map_location="cpu")
@@ -1345,7 +1452,6 @@ if __name__ == "__main__":
     for i in identified_labels:
         if identified_labels[i] != "":
             final_dict[i] = identified_labels[i]
-    print("-" * 64)
     event_x = final_dict.copy()
     for key, value in event_x.items():
         if value == "fire":
@@ -1359,11 +1465,12 @@ if __name__ == "__main__":
         if value == "combat":
             event_x[key] = "Combat"
 
+    print("-" * 64)
     print("FINAL PREDICTED EVENTS : ", json.dumps(event_x))
     print("FINAL LIST : ", priority_order_list)
     print("-" * 64)
 
-    ##################################################################################
+    #################### PATH GENERATOR ####################
 
     path_gen = path_gen()
     data = path_gen.gendirect(path_gen.path_find(priority_order_list))
@@ -1381,7 +1488,7 @@ if __name__ == "__main__":
     # print(direct_str)
     # print(nodes_str)
 
-    ##################################################################################
+    #################### ARUCO AND BOT COMS ####################
 
     lat_lon = read_csv()
     marker = "aruco"
